@@ -7,7 +7,7 @@ type Result<T> = { ok: true; value: T } | { ok: false; message: string };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Vrai si `s` est une date calendaire réelle au format AAAA-MM-JJ. */
-function isValidDate(s: string): boolean {
+export function isValidDate(s: string): boolean {
 	if (!DATE_RE.test(s)) return false;
 	const [y, m, d] = s.split('-').map(Number);
 	if (m < 1 || m > 12 || d < 1 || d > 31) return false;

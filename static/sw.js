@@ -1,14 +1,22 @@
 /* FitTrack — service worker écrit à la main (Cache API native, aucune dépendance).
-   Stratégies : navigations & API GET → réseau d'abord (repli cache hors-ligne) ;
-   images/polices/assets de build → cache d'abord. */
+   PRIVACY-FIRST : on ne met JAMAIS en cache de données personnelles (pages rendues,
+   réponses /api). Seuls les assets statiques content-hashés (build, icônes, polices,
+   images) sont mis en cache. Les navigations vont au réseau ; hors-ligne → page
+   générique. Bumper VERSION à chaque release pour purger les anciens caches. */
 const VERSION = 'v1';
-const PAGE_CACHE = `ft-pages-${VERSION}`;
-const API_CACHE = `ft-api-${VERSION}`;
 const ASSET_CACHE = `ft-assets-${VERSION}`;
-const KEEP = [PAGE_CACHE, API_CACHE, ASSET_CACHE];
+const SHELL_CACHE = `ft-shell-${VERSION}`;
+const OFFLINE_URL = '/offline.html';
+const KEEP = [ASSET_CACHE, SHELL_CACHE];
 
-self.addEventListener('install', () => {
-	self.skipWaiting();
+self.addEventListener('install', (event) => {
+	event.waitUntil(
+		(async () => {
+			const cache = await caches.open(SHELL_CACHE);
+			await cache.add(OFFLINE_URL);
+			await self.skipWaiting();
+		})()
+	);
 });
 
 self.addEventListener('activate', (event) => {
@@ -23,38 +31,8 @@ self.addEventListener('activate', (event) => {
 	);
 });
 
-function fetchWithTimeout(request, ms) {
-	if (!ms) return fetch(request);
-	return new Promise((resolve, reject) => {
-		const timer = setTimeout(() => reject(new Error('timeout')), ms);
-		fetch(request).then(
-			(r) => {
-				clearTimeout(timer);
-				resolve(r);
-			},
-			(e) => {
-				clearTimeout(timer);
-				reject(e);
-			}
-		);
-	});
-}
-
-async function networkFirst(request, cacheName, timeoutMs) {
-	const cache = await caches.open(cacheName);
-	try {
-		const fresh = await fetchWithTimeout(request, timeoutMs);
-		if (fresh && fresh.ok) cache.put(request, fresh.clone());
-		return fresh;
-	} catch {
-		const cached = await cache.match(request);
-		if (cached) return cached;
-		throw new Error('offline');
-	}
-}
-
-async function cacheFirst(request, cacheName) {
-	const cache = await caches.open(cacheName);
+async function cacheFirst(request) {
+	const cache = await caches.open(ASSET_CACHE);
 	const cached = await cache.match(request);
 	if (cached) return cached;
 	const fresh = await fetch(request);
@@ -69,28 +47,40 @@ self.addEventListener('fetch', (event) => {
 
 	// images / polices (toute origine, ex. Google Fonts) → cache d'abord
 	if (request.destination === 'image' || request.destination === 'font') {
-		event.respondWith(cacheFirst(request, ASSET_CACHE));
+		event.respondWith(cacheFirst(request));
 		return;
 	}
 
-	// ne gère que la même origine au-delà
+	// au-delà : même origine uniquement
 	if (url.origin !== self.location.origin) return;
 
-	// navigations : réseau d'abord, repli sur la dernière page connue
+	// assets de build / icônes (content-hashés, non sensibles) → cache d'abord
+	if (url.pathname.startsWith('/_app/') || url.pathname.startsWith('/icons/')) {
+		event.respondWith(cacheFirst(request));
+		return;
+	}
+
+	// navigations : réseau uniquement (aucune page perso mise en cache) ; hors-ligne →
+	// page générique. On reconstruit la réponse si elle a été redirigée (ex. 303 → /login)
+	// pour éviter l'erreur « a redirected response was used ».
 	if (request.mode === 'navigate') {
-		if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/login')) return;
 		event.respondWith(
 			(async () => {
 				try {
-					const fresh = await fetchWithTimeout(request, 3000);
-					const cache = await caches.open(PAGE_CACHE);
-					if (fresh.ok) cache.put(request, fresh.clone());
-					return fresh;
+					const res = await fetch(request);
+					if (res.redirected) {
+						const body = await res.blob();
+						return new Response(body, {
+							status: res.status,
+							statusText: res.statusText,
+							headers: res.headers
+						});
+					}
+					return res;
 				} catch {
-					const cache = await caches.open(PAGE_CACHE);
+					const cache = await caches.open(SHELL_CACHE);
 					return (
-						(await cache.match(request)) ||
-						(await cache.match('/')) ||
+						(await cache.match(OFFLINE_URL)) ||
 						new Response('Hors ligne.', {
 							status: 503,
 							headers: { 'content-type': 'text/plain; charset=utf-8' }
@@ -99,25 +89,6 @@ self.addEventListener('fetch', (event) => {
 				}
 			})()
 		);
-		return;
 	}
-
-	// API en lecture : réseau d'abord, repli cache
-	if (url.pathname.startsWith('/api/')) {
-		event.respondWith(
-			networkFirst(request, API_CACHE, 3000).catch(
-				() =>
-					new Response(JSON.stringify({ error: { code: 'OFFLINE', message: 'Hors ligne.' } }), {
-						status: 503,
-						headers: { 'content-type': 'application/json' }
-					})
-			)
-		);
-		return;
-	}
-
-	// assets de build / icônes → cache d'abord
-	if (url.pathname.startsWith('/_app/') || url.pathname.startsWith('/icons/')) {
-		event.respondWith(cacheFirst(request, ASSET_CACHE));
-	}
+	// tout le reste (pages avec query-string, /api/*) → réseau natif, jamais mis en cache
 });

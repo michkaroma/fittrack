@@ -121,6 +121,11 @@ export function listEntries(opts?: { from?: string; to?: string }): Entry[] {
 			.prepare('SELECT * FROM entries WHERE date >= ? ORDER BY date ASC')
 			.all(opts.from) as Entry[];
 	}
+	if (opts?.to) {
+		return db
+			.prepare('SELECT * FROM entries WHERE date <= ? ORDER BY date ASC')
+			.all(opts.to) as Entry[];
+	}
 	return db.prepare('SELECT * FROM entries ORDER BY date ASC').all() as Entry[];
 }
 
@@ -134,10 +139,16 @@ export function getGoals(): Goals {
 }
 
 export function setGoals(input: GoalsInput): Goals {
+	// Upsert auto-réparant : recrée la ligne id=1 si elle manquait (la contrainte
+	// CHECK(id=1) + PK garantit l'unicité), au lieu d'un UPDATE silencieusement no-op.
 	getDb()
 		.prepare(
-			`UPDATE goals SET target_weight_kg = @target_weight_kg,
-         target_body_fat_pct = @target_body_fat_pct, updated_at = datetime('now') WHERE id = 1`
+			`INSERT INTO goals (id, target_weight_kg, target_body_fat_pct, updated_at)
+       VALUES (1, @target_weight_kg, @target_body_fat_pct, datetime('now'))
+       ON CONFLICT(id) DO UPDATE SET
+         target_weight_kg = excluded.target_weight_kg,
+         target_body_fat_pct = excluded.target_body_fat_pct,
+         updated_at = datetime('now')`
 		)
 		.run({
 			target_weight_kg: input.target_weight_kg,

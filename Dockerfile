@@ -20,5 +20,9 @@ ENV NODE_ENV=production
 COPY --from=build /app/build ./build
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
+# Tourne en utilisateur non-root `node` (uid 1000) — pas de privilèges root dans le conteneur.
+# Le volume hôte ./data doit appartenir à l'uid 1000 : sudo chown -R 1000:1000 ./data
+RUN mkdir -p /app/data && chown -R node:node /app
+USER node
 EXPOSE 3000
 CMD ["node", "build/index.js"]

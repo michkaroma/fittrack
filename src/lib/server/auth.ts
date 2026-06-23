@@ -46,11 +46,20 @@ export function verifySession(token: string | undefined, now: number): boolean {
 	return true;
 }
 
-/** Comparaison à temps constant du mot de passe. */
+// Valeur placeholder de .env.example : publique, donc ne doit JAMAIS authentifier.
+const PLACEHOLDER_PASSWORD = 'change-moi-en-un-mot-de-passe-fort';
+
+/** Le mot de passe est-il réellement configuré (non vide ET non placeholder) ? */
+export function passwordConfigured(): boolean {
+	const pw = env.APP_PASSWORD ?? '';
+	return pw.length > 0 && pw !== PLACEHOLDER_PASSWORD;
+}
+
+/** Comparaison à temps constant du mot de passe. Fail-closed : tant qu'aucun vrai
+ *  mot de passe n'est défini (vide ou placeholder), AUCUNE connexion n'est acceptée. */
 export function passwordMatches(input: string): boolean {
-	const expected = env.APP_PASSWORD ?? '';
-	// Un mot de passe vide (côté config ou saisie) ne doit jamais authentifier.
-	if (expected.length === 0 || input.length === 0) return false;
+	if (!passwordConfigured() || input.length === 0) return false;
+	const expected = env.APP_PASSWORD;
 	const a = Buffer.from(input);
 	const b = Buffer.from(expected);
 	if (a.length !== b.length) return false;

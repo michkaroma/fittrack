@@ -84,3 +84,15 @@ en miroir de l'entrée HabitQuest de `/usr/local/bin/backup.sh`.
 Application publique protégée par mot de passe (un seul utilisateur). Toutes les routes et
 endpoints API sont gardés par `hooks.server.ts` ; seules la page de connexion et les assets
 PWA sont publics. Le mot de passe vient de `APP_PASSWORD` et n'est jamais affiché en clair.
+
+- **Fail-closed** : tant que `APP_PASSWORD` est vide ou laissé au placeholder, **toute connexion
+  est refusée** (un avertissement est logué au démarrage). Définis un mot de passe fort, puis
+  `docker compose up -d`.
+- **Sessions** : cookie HMAC sans état, valable 90 jours. La déconnexion efface le cookie côté
+  navigateur mais ne révoque pas un jeton déjà capturé : pour invalider **toutes** les sessions,
+  change `SESSION_SECRET` (ou `APP_PASSWORD`) et redéploie.
+- **Conteneur non-root** : le service tourne en utilisateur `node` (uid 1000). Le volume hôte
+  `./data` doit lui appartenir : `sudo chown -R 1000:1000 data`.
+- **Service worker** : ne met en cache **aucune** donnée personnelle (pages, `/api`) — uniquement
+  les assets statiques. Bumper `VERSION` dans `static/sw.js` à chaque release pour purger les
+  anciens caches.
