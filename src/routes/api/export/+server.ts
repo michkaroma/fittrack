@@ -9,7 +9,7 @@ function stamp(d: Date): string {
 }
 
 export const GET: RequestHandler = ({ url }) => {
-	const period = parsePeriod(url.searchParams.get('period'));
+	const period = parsePeriod(url.searchParams.get('period') ?? 'all');
 	const entries = listEntries({ from: periodFrom(period) });
 	const goals = getGoals();
 	const now = new Date();

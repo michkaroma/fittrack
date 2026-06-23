@@ -10,6 +10,7 @@ export interface Entry {
 	protein_g: number | null;
 	fat_g: number | null;
 	carbs_g: number | null;
+	effort: number | null; // niveau d'effort physique 1–5
 	created_at: string;
 	updated_at: string;
 }
@@ -22,7 +23,8 @@ export type MetricField =
 	| 'calories'
 	| 'protein_g'
 	| 'fat_g'
-	| 'carbs_g';
+	| 'carbs_g'
+	| 'effort';
 
 /** Données reçues du formulaire : date + mesures (toutes nullables). */
 export interface EntryInput {
@@ -34,6 +36,7 @@ export interface EntryInput {
 	protein_g: number | null;
 	fat_g: number | null;
 	carbs_g: number | null;
+	effort: number | null; // niveau d'effort physique 1–5
 }
 
 /** Objectifs personnels (aucune cible imposée : saisis par l'utilisateur). */

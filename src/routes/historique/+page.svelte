@@ -59,6 +59,7 @@
 					<th class="px-2.5 py-2.5 font-semibold">P&nbsp;%</th>
 					<th class="px-2.5 py-2.5 font-semibold">L&nbsp;%</th>
 					<th class="px-2.5 py-2.5 font-semibold">G&nbsp;%</th>
+					<th class="px-2.5 py-2.5 font-semibold">Effort</th>
 					<th class="px-2.5 py-2.5"></th>
 				</tr>
 			</thead>
@@ -81,6 +82,7 @@
 						<td class="px-2.5 py-2.5 text-muted">{f0(d.macros?.proteinPct)}</td>
 						<td class="px-2.5 py-2.5 text-muted">{f0(d.macros?.fatPct)}</td>
 						<td class="px-2.5 py-2.5 text-muted">{f0(d.macros?.carbsPct)}</td>
+						<td class="px-2.5 py-2.5 text-ink2">{f0(e.effort)}</td>
 						<td class="px-2 py-2.5">
 							<button
 								type="button"

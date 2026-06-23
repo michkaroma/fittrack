@@ -31,6 +31,7 @@ interface FieldSpec {
 	label: string;
 	min: number;
 	max: number;
+	int?: boolean;
 }
 const ENTRY_FIELDS: FieldSpec[] = [
 	{ key: 'weight_kg', label: 'Poids', min: 0, max: 500 },
@@ -39,7 +40,8 @@ const ENTRY_FIELDS: FieldSpec[] = [
 	{ key: 'calories', label: 'Calories', min: 0, max: 20000 },
 	{ key: 'protein_g', label: 'Protéines', min: 0, max: 3000 },
 	{ key: 'fat_g', label: 'Lipides', min: 0, max: 3000 },
-	{ key: 'carbs_g', label: 'Glucides', min: 0, max: 3000 }
+	{ key: 'carbs_g', label: 'Glucides', min: 0, max: 3000 },
+	{ key: 'effort', label: 'Effort', min: 1, max: 5, int: true }
 ];
 
 export function validateEntryInput(body: unknown): Result<EntryInput> {
@@ -56,12 +58,13 @@ export function validateEntryInput(body: unknown): Result<EntryInput> {
 		calories: null,
 		protein_g: null,
 		fat_g: null,
-		carbs_g: null
+		carbs_g: null,
+		effort: null
 	};
 	for (const f of ENTRY_FIELDS) {
 		const r = optionalNumber(b[f.key], f.label, f.min, f.max);
 		if (!r.ok) return r;
-		value[f.key] = r.value;
+		value[f.key] = f.int && r.value != null ? Math.round(r.value) : r.value;
 	}
 	return { ok: true, value };
 }

@@ -46,7 +46,8 @@
 		calories: init(entry?.calories),
 		protein_g: init(entry?.protein_g),
 		fat_g: init(entry?.fat_g),
-		carbs_g: init(entry?.carbs_g)
+		carbs_g: init(entry?.carbs_g),
+		effort: init(entry?.effort)
 	});
 
 	let busy = $state(false);
@@ -78,6 +79,18 @@
 
 	const f1 = (n: number) => n.toFixed(1);
 
+	const EFFORT_LEVELS: { v: string; desc: string }[] = [
+		{ v: '1', desc: 'Repos · journée à la maison, aucune activité' },
+		{ v: '2', desc: 'Léger · déplacements à pied, activité du quotidien' },
+		{ v: '3', desc: 'Modéré · petite séance de sport, sinon journée calme' },
+		{ v: '4', desc: 'Actif · journée active + séance de sport' },
+		{ v: '5', desc: 'Intense · grosse séance de sport' }
+	];
+	function pickEffort(v: string) {
+		fields.effort = fields.effort === v ? '' : v; // re-toucher le niveau actif = désélection
+		saved = false;
+	}
+
 	async function save(e: Event) {
 		e.preventDefault();
 		busy = true;
@@ -92,7 +105,8 @@
 				calories: fields.calories,
 				protein_g: fields.protein_g,
 				fat_g: fields.fat_g,
-				carbs_g: fields.carbs_g
+				carbs_g: fields.carbs_g,
+				effort: fields.effort
 			};
 			const res = await fetch('/api/entries', {
 				method: 'POST',
@@ -155,6 +169,25 @@
 			</div>
 		</fieldset>
 	{/each}
+
+	<fieldset class="flex flex-col gap-3">
+		<legend class="eyebrow mb-1">Activité physique</legend>
+		<div class="seg w-full" role="tablist" aria-label="Niveau d'effort de la journée, de 1 à 5">
+			{#each EFFORT_LEVELS as lvl}
+				<button
+					type="button"
+					role="tab"
+					class="seg-tab"
+					aria-selected={fields.effort === lvl.v}
+					onclick={() => pickEffort(lvl.v)}
+				>{lvl.v}</button>
+			{/each}
+		</div>
+		<p class="min-h-[1.25rem] text-[12px] leading-snug text-muted">
+			{EFFORT_LEVELS.find((l) => l.v === fields.effort)?.desc ??
+				'Optionnel · touche un niveau (re-touche pour effacer).'}
+		</p>
+	</fieldset>
 
 	{#if hasPreview}
 		<div class="rounded-[12px] border border-border bg-surface2 p-3">

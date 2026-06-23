@@ -41,6 +41,13 @@ export const MIGRATIONS: Migration[] = [
         INSERT OR IGNORE INTO goals (id) VALUES (1);
       `);
 		}
+	},
+	{
+		version: 2,
+		name: 'add_effort',
+		up: (db) => {
+			db.exec(/* sql */ `ALTER TABLE entries ADD COLUMN effort INTEGER;`);
+		}
 	}
 ];
 

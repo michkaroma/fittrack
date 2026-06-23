@@ -43,6 +43,7 @@
 	const bfMa = $derived(rollingAverage(bfPts, 7));
 	const musclePts = $derived(series(E, 'muscle_pct'));
 	const caloriePts = $derived(series(E, 'calories'));
+	const effortPts = $derived(series(E, 'effort'));
 
 	// composition (kg) : masse maigre + masse grasse = poids ; muscle superposé
 	const fatFreePts = $derived(
@@ -85,6 +86,7 @@
 	const sBf = $derived(stat(E, 'body_fat_pct'));
 	const sMuscle = $derived(stat(E, 'muscle_pct'));
 	const sCal = $derived(stat(E, 'calories'));
+	const sEffort = $derived(stat(E, 'effort'));
 
 	const hasAny = $derived(E.length > 0);
 </script>
@@ -116,10 +118,11 @@
 	<!-- tuiles : dernières valeurs + variation -->
 	<div class="flex flex-col gap-3">
 		<StatTile label="Poids" value={sWeight.last} unit="kg" delta={lastDelta(E, 'weight_kg')} format={f1} big />
-		<div class="grid grid-cols-3 gap-3">
+		<div class="grid grid-cols-2 gap-3">
 			<StatTile label="Masse grasse" value={sBf.last} unit="%" delta={lastDelta(E, 'body_fat_pct')} format={f1} />
 			<StatTile label="Muscle" value={sMuscle.last} unit="%" delta={lastDelta(E, 'muscle_pct')} format={f1} />
 			<StatTile label="Calories" value={sCal.last} unit="kcal" delta={lastDelta(E, 'calories')} format={f0} />
+			<StatTile label="Activité" value={sEffort.last} unit="/5" delta={lastDelta(E, 'effort')} format={f0} />
 		</div>
 	</div>
 
@@ -215,6 +218,20 @@
 		</div>
 	</section>
 
+	<!-- activité physique -->
+	<section class="mt-5">
+		<h2 class="mb-2 text-[17px] font-semibold text-ink">Activité physique (1–5)</h2>
+		<div class="card">
+			<LineChart
+				height={170}
+				unit="/5"
+				format={f0}
+				ariaLabel="Niveau d'effort physique quotidien"
+				series={[{ label: 'Effort', points: effortPts, tone: 'accent', dash: 'solid', area: true }]}
+			/>
+		</div>
+	</section>
+
 	<!-- macros -->
 	<section class="mt-5">
 		<div class="mb-2 flex items-center justify-between gap-3">
@@ -261,8 +278,8 @@
 
 	<!-- export -->
 	<section class="mt-6">
-		<a href={`/api/export?period=${data.period}`} class="btn-ghost w-full" download>
-			Exporter en Markdown ({data.periodLabel})
+		<a href="/api/export?period=all" class="btn-ghost w-full" download>
+			Exporter en Markdown (tout l'historique)
 		</a>
 	</section>
 {/if}

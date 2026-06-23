@@ -15,7 +15,8 @@ const METRIC_FIELDS: MetricField[] = [
 	'calories',
 	'protein_g',
 	'fat_g',
-	'carbs_g'
+	'carbs_g',
+	'effort'
 ];
 
 let _db: Database.Database | null = null;
@@ -76,8 +77,8 @@ export function upsertEntry(input: EntryInput): Entry | null {
 		return null;
 	}
 	db.prepare(
-		`INSERT INTO entries (date, weight_kg, body_fat_pct, muscle_pct, calories, protein_g, fat_g, carbs_g, updated_at)
-     VALUES (@date, @weight_kg, @body_fat_pct, @muscle_pct, @calories, @protein_g, @fat_g, @carbs_g, datetime('now'))
+		`INSERT INTO entries (date, weight_kg, body_fat_pct, muscle_pct, calories, protein_g, fat_g, carbs_g, effort, updated_at)
+     VALUES (@date, @weight_kg, @body_fat_pct, @muscle_pct, @calories, @protein_g, @fat_g, @carbs_g, @effort, datetime('now'))
      ON CONFLICT(date) DO UPDATE SET
        weight_kg = excluded.weight_kg,
        body_fat_pct = excluded.body_fat_pct,
@@ -86,6 +87,7 @@ export function upsertEntry(input: EntryInput): Entry | null {
        protein_g = excluded.protein_g,
        fat_g = excluded.fat_g,
        carbs_g = excluded.carbs_g,
+       effort = excluded.effort,
        updated_at = datetime('now')`
 	).run({
 		date: input.date,
@@ -95,7 +97,8 @@ export function upsertEntry(input: EntryInput): Entry | null {
 		calories: input.calories,
 		protein_g: input.protein_g,
 		fat_g: input.fat_g,
-		carbs_g: input.carbs_g
+		carbs_g: input.carbs_g,
+		effort: input.effort
 	});
 	return getEntry(input.date);
 }

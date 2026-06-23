@@ -68,6 +68,7 @@ export function buildMarkdown(
 	out.push(
 		'| P / L / G (%) | Part de chaque macro dans les kcal issues des macros (P·4, G·4, L·9) *(calculé)* | % |'
 	);
+	out.push('| Effort | Activité physique de la journée (1 = repos … 5 = grosse séance) | échelle 1–5 |');
 	out.push('');
 	out.push(
 		'> Masse maigre et masse musculaire sont **distinctes** : la masse maigre inclut os, eau et organes ; ' +
@@ -87,6 +88,22 @@ export function buildMarkdown(
 			const s = stat(entries, r.field);
 			if (s.last != null) out.push(`- **${r.label}** : ${r.fmt(s.last)} ${r.unit} _(le ${s.lastDate})_`);
 		}
+	}
+	out.push('');
+
+	// ── Activité physique (effort 1–5) ───────────────────────────────────────
+	const se = stat(entries, 'effort');
+	out.push('### Activité physique');
+	out.push('');
+	if (se.count === 0) {
+		out.push('_Aucun niveau d’effort saisi sur la période._');
+	} else {
+		out.push(`- Dernier niveau : **${f0(se.last)} / 5** _(le ${se.lastDate})_`);
+		out.push(`- Moyenne : ${f1(se.avg)} / 5 · min ${f0(se.min)} · max ${f0(se.max)} · ${se.count} jour(s) renseigné(s)`);
+		// Répartition par niveau
+		const counts = [0, 0, 0, 0, 0];
+		for (const e of entries) if (e.effort != null && e.effort >= 1 && e.effort <= 5) counts[e.effort - 1]++;
+		out.push(`- Répartition : ${counts.map((c, i) => `niveau ${i + 1} : ${c} j`).join(' · ')}`);
 	}
 	out.push('');
 
@@ -132,19 +149,20 @@ export function buildMarkdown(
 	out.push('## Historique');
 	out.push('');
 	out.push(
-		'| Date | Poids | MG % | Musc % | MG kg | Maigre kg | Musc kg | kcal | P g | L g | G g | P % | L % | G % |'
+		'| Date | Poids | MG % | Musc % | MG kg | Maigre kg | Musc kg | kcal | P g | L g | G g | P % | L % | G % | Effort |'
 	);
-	out.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
+	out.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
 	for (const e of entries) {
 		const d = derive(e);
 		out.push(
 			`| ${e.date} | ${f1(e.weight_kg)} | ${f1(e.body_fat_pct)} | ${f1(e.muscle_pct)} | ` +
 				`${f1(d.fatMassKg)} | ${f1(d.fatFreeMassKg)} | ${f1(d.muscleMassKg)} | ` +
 				`${f0(e.calories)} | ${f0(e.protein_g)} | ${f0(e.fat_g)} | ${f0(e.carbs_g)} | ` +
-				`${f1(d.macros?.proteinPct ?? null)} | ${f1(d.macros?.fatPct ?? null)} | ${f1(d.macros?.carbsPct ?? null)} |`
+				`${f1(d.macros?.proteinPct ?? null)} | ${f1(d.macros?.fatPct ?? null)} | ${f1(d.macros?.carbsPct ?? null)} | ` +
+				`${f0(e.effort)} |`
 		);
 	}
-	if (n === 0) out.push('| _aucune donnée_ | | | | | | | | | | | | | |');
+	if (n === 0) out.push('| _aucune donnée_ | | | | | | | | | | | | | | |');
 	out.push('');
 
 	return out.join('\n');
