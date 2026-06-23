@@ -1,0 +1,28 @@
+{
+	"name": "FitTrack",
+	"short_name": "FitTrack",
+	"description": "Journal personnel de composition corporelle et de nutrition : poids, masse grasse/maigre/musculaire, calories et macros. Visualise et exporte.",
+	"lang": "fr",
+	"dir": "ltr",
+	"theme_color": "#0e0f10",
+	"background_color": "#0e0f10",
+	"display": "standalone",
+	"orientation": "portrait",
+	"start_url": "/?source=pwa",
+	"scope": "/",
+	"categories": ["health", "fitness", "lifestyle"],
+	"icons": [
+		{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+		{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+		{ "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+		{ "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+	],
+	"shortcuts": [
+		{
+			"name": "Saisir une mesure",
+			"short_name": "Saisie",
+			"description": "Aller directement au formulaire du jour",
+			"url": "/saisie?source=shortcut"
+		}
+	]
+}

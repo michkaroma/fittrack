@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   FitTrack — système de design « instrument clinique »
+   Accent unique : ambre-signal #E8AF3C sur charcoal neutre (jamais de bleu/navy).
+   Tokens en triplets "R G B" pour rgb(var(--x) / <alpha>).
+   ============================================================================ */
+:root,
+.dark {
+	/* surfaces (charcoal neutre, très léger biais chaud — jamais bleuté) */
+	--c-bg:        14  15  16; /* #0e0f10 */
+	--c-surface:   23  24  26; /* #17181a */
+	--c-surface-2: 30  31  34; /* #1e1f22 — puits de saisie / graphes */
+	--c-border:    48  50  54; /* #303236 */
+	--c-elevated:  38  40  44; /* #26282c */
+
+	/* texte */
+	--c-text:      237 238 239; /* #ededef — quasi blanc */
+	--c-text-2:    162 165 170; /* #a2a5aa — neutre clair */
+	--c-muted:     110 113 119; /* #6e7177 — neutre sourd */
+
+	/* accent unique */
+	--c-accent:     232 175  60; /* #e8af3c — ambre-signal */
+	--c-accent-700: 201 145  34; /* #c99122 — survol/foncé */
+
+	/* deltas de variation : NON moralisés (ni vert « bien » ni rouge « mal ») —
+	   la direction est portée par la flèche/le signe, la couleur n'est qu'une emphase */
+	--c-up:   237 238 239; /* neutre vif */
+	--c-down: 162 165 170; /* neutre sourd */
+
+	/* polices */
+	--font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--font-num: 'Saira Condensed', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+	--safe-top: env(safe-area-inset-top, 0px);
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	--nav-h: 60px;
+}
+
+@layer base {
+	html {
+		-webkit-tap-highlight-color: transparent;
+	}
+	body {
+		@apply bg-bg text-ink font-sans antialiased;
+		overscroll-behavior-y: none;
+	}
+	button,
+	[role='button'] {
+		@apply select-none;
+		touch-action: manipulation;
+	}
+	:focus-visible {
+		@apply outline-none ring-2 ring-accent/70 ring-offset-2 ring-offset-bg;
+	}
+	/* chiffres tabulaires partout où l'on affiche des mesures */
+	.tabular-nums {
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+@layer components {
+	.card {
+		@apply rounded-[14px] border border-border bg-surface p-4 sm:p-5;
+		box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+	}
+
+	/* sur-titre / unité : 11px MAJUSCULES espacé */
+	.eyebrow {
+		@apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
+	}
+
+	/* gros chiffre héros (Saira Condensed) */
+	.stat-hero {
+		@apply font-num text-[44px] font-bold leading-[0.95] tabular-nums text-ink;
+	}
+	.stat-num {
+		@apply font-num text-[28px] font-semibold leading-none tabular-nums text-ink;
+	}
+
+	.btn {
+		@apply inline-flex h-11 select-none items-center justify-center gap-2 rounded-[10px]
+			px-5 text-[15px] font-medium transition-colors
+			focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80
+			focus-visible:ring-offset-2 focus-visible:ring-offset-bg
+			disabled:pointer-events-none disabled:opacity-40;
+	}
+	/* unique CTA ambre (rare) — libellé en near-black sur ambre, jamais blanc */
+	.btn-primary {
+		@apply btn bg-accent font-semibold text-bg hover:bg-accent-700 active:translate-y-px;
+	}
+	.btn-ghost {
+		@apply btn border border-border bg-transparent text-ink2 hover:bg-surface2 hover:text-ink;
+	}
+	/* action destructive : reste neutre (palette mono-accent) mais clairement libellée */
+	.btn-danger {
+		@apply btn border border-border bg-transparent text-ink2 hover:border-muted hover:bg-surface2 hover:text-ink;
+	}
+	.btn-sm {
+		@apply h-9 px-3 text-[13px];
+	}
+
+	/* puits de saisie de mesure */
+	.input {
+		@apply h-12 w-full rounded-[6px] border border-border bg-surface2 px-3.5
+			font-num text-[18px] tabular-nums text-ink
+			placeholder:font-sans placeholder:text-muted
+			hover:border-muted focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/40
+			transition-colors;
+	}
+	.label {
+		@apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
+	}
+
+	/* contrôle segmenté (sélecteur de période) */
+	.seg {
+		@apply inline-grid auto-cols-fr grid-flow-col gap-1 rounded-[8px] border border-border bg-surface2 p-1;
+	}
+	.seg-tab {
+		@apply rounded-[6px] px-3 py-1.5 text-[13px] font-medium tabular-nums text-ink2 transition-colors hover:text-ink;
+	}
+	.seg-tab[aria-selected='true'] {
+		@apply bg-elevated font-semibold text-accent;
+		box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.05);
+	}
+}
+
+@layer utilities {
+	.pb-safe {
+		padding-bottom: calc(var(--safe-bottom) + 0.5rem);
+	}
+	.pt-safe {
+		padding-top: var(--safe-top);
+	}
+	.pb-nav {
+		padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 0.75rem);
+	}
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+	.no-scrollbar {
+		scrollbar-width: none;
+	}
+}
+
+/* Reduced motion : coupe les transitions décoratives */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}

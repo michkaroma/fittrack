@@ -1,0 +1,10 @@
+services:
+  fittrack:
+    build: .
+    container_name: fittrack
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8084:3000"
+    volumes:
+      - ./data:/app/data

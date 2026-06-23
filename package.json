@@ -1,0 +1,35 @@
+{
+  "name": "fittrack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "FitTrack — journal personnel de composition corporelle et de nutrition (PWA). Stocke, calcule, visualise, exporte. Aucune recommandation.",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node build/index.js",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "icons": "tsx scripts/generate-icons.ts"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-node": "5.5.4",
+    "@sveltejs/kit": "2.65.0",
+    "@sveltejs/vite-plugin-svelte": "^4.0.2",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.9.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "sharp": "^0.33.5",
+    "svelte": "^5.2.7",
+    "svelte-check": "^4.1.0",
+    "tailwindcss": "^3.4.15",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.6.0"
+  }
+}
