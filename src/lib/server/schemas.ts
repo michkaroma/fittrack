@@ -1,6 +1,6 @@
 // src/lib/server/schemas.ts — validateurs manuels (sans dépendance Zod).
 // Renvoient { ok:true, value } ou { ok:false, message } (message FR).
-import type { EntryInput, GoalsInput, MetricField } from '../types';
+import type { EntryInput, GoalsInput, MetricField, ProfileInput, Sex } from '../types';
 
 type Result<T> = { ok: true; value: T } | { ok: false; message: string };
 
@@ -76,4 +76,57 @@ export function validateGoalsInput(body: unknown): Result<GoalsInput> {
 	const bf = optionalNumber(b.target_body_fat_pct, 'Objectif de masse grasse %', 0, 100);
 	if (!bf.ok) return bf;
 	return { ok: true, value: { target_weight_kg: w.value, target_body_fat_pct: bf.value } };
+}
+
+const NOTES_MAX = 4000;
+
+/** Aujourd'hui au format AAAA-MM-JJ (heure locale serveur) — borne haute de la date de naissance. */
+function todayLocal(): string {
+	const d = new Date();
+	const m = String(d.getMonth() + 1).padStart(2, '0');
+	const day = String(d.getDate()).padStart(2, '0');
+	return `${d.getFullYear()}-${m}-${day}`;
+}
+
+export function validateProfileInput(body: unknown): Result<ProfileInput> {
+	const b = (body ?? {}) as Record<string, unknown>;
+
+	// Taille (cm, entier) — facultative.
+	const h = optionalNumber(b.height_cm, 'Taille', 50, 300);
+	if (!h.ok) return h;
+	const height_cm = h.value == null ? null : Math.round(h.value);
+
+	// Sexe — 'male' | 'female' | null. Narrowing positif (exclure des littéraux
+	// d'un `unknown` ne le réduit pas à Sex).
+	let sex: Sex | null = null;
+	const rawSex = b.sex;
+	if (rawSex === 'male' || rawSex === 'female') {
+		sex = rawSex;
+	} else if (rawSex != null && rawSex !== '') {
+		return { ok: false, message: 'Sexe : valeur invalide.' };
+	}
+
+	// Date de naissance — facultative, date réelle, ni future ni absurde.
+	let birth_date: string | null = null;
+	const rawBirth = typeof b.birth_date === 'string' ? b.birth_date.trim() : '';
+	if (rawBirth !== '') {
+		if (!isValidDate(rawBirth))
+			return { ok: false, message: 'Date de naissance : format attendu AAAA-MM-JJ.' };
+		if (rawBirth > todayLocal())
+			return { ok: false, message: 'Date de naissance : ne peut pas être dans le futur.' };
+		if (Number(rawBirth.slice(0, 4)) < 1900)
+			return { ok: false, message: 'Date de naissance : année invalide.' };
+		birth_date = rawBirth;
+	}
+
+	// Notes — texte libre facultatif, longueur bornée.
+	let notes: string | null = null;
+	const rawNotes = typeof b.notes === 'string' ? b.notes.trim() : '';
+	if (rawNotes !== '') {
+		if (rawNotes.length > NOTES_MAX)
+			return { ok: false, message: `Notes : ${NOTES_MAX} caractères maximum.` };
+		notes = rawNotes;
+	}
+
+	return { ok: true, value: { height_cm, sex, birth_date, notes } };
 }

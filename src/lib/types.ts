@@ -51,5 +51,24 @@ export interface GoalsInput {
 	target_body_fat_pct: number | null;
 }
 
+/** Sexe biologique (utile pour interpréter la composition corporelle). */
+export type Sex = 'male' | 'female';
+
+/** Informations personnelles : ligne unique, peu/pas variables dans le temps. */
+export interface Profile {
+	height_cm: number | null;
+	sex: Sex | null;
+	birth_date: string | null; // 'YYYY-MM-DD'
+	notes: string | null; // contexte libre (santé, sport, restrictions…)
+	updated_at: string;
+}
+
+export interface ProfileInput {
+	height_cm: number | null;
+	sex: Sex | null;
+	birth_date: string | null;
+	notes: string | null;
+}
+
 /** Période d'affichage / d'export. */
 export type Period = '7' | '30' | '90' | 'all';

@@ -6,7 +6,7 @@ import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { runMigrations } from './migrations';
-import type { Entry, EntryInput, Goals, GoalsInput, MetricField } from '../types';
+import type { Entry, EntryInput, Goals, GoalsInput, MetricField, Profile, ProfileInput } from '../types';
 
 const METRIC_FIELDS: MetricField[] = [
 	'weight_kg',
@@ -158,4 +158,35 @@ export function setGoals(input: GoalsInput): Goals {
 			target_body_fat_pct: input.target_body_fat_pct
 		});
 	return getGoals();
+}
+
+// ── Profile ──────────────────────────────────────────────────────────────────
+
+export function getProfile(): Profile {
+	const row = getDb()
+		.prepare('SELECT height_cm, sex, birth_date, notes, updated_at FROM profile WHERE id = 1')
+		.get() as Profile | undefined;
+	return row ?? { height_cm: null, sex: null, birth_date: null, notes: null, updated_at: '' };
+}
+
+export function setProfile(input: ProfileInput): Profile {
+	// Upsert auto-réparant (même pattern que setGoals) : recrée la ligne id=1 si absente.
+	getDb()
+		.prepare(
+			`INSERT INTO profile (id, height_cm, sex, birth_date, notes, updated_at)
+       VALUES (1, @height_cm, @sex, @birth_date, @notes, datetime('now'))
+       ON CONFLICT(id) DO UPDATE SET
+         height_cm = excluded.height_cm,
+         sex = excluded.sex,
+         birth_date = excluded.birth_date,
+         notes = excluded.notes,
+         updated_at = datetime('now')`
+		)
+		.run({
+			height_cm: input.height_cm,
+			sex: input.sex,
+			birth_date: input.birth_date,
+			notes: input.notes
+		});
+	return getProfile();
 }

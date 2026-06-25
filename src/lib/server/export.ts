@@ -1,8 +1,8 @@
 // src/lib/server/export.ts — génère le rapport Markdown destiné à une IA / un pro.
 // Contenu : en-tête + légende des colonnes & unités, résumé (dernières valeurs,
 // moyennes/min/max, progression vers objectifs), puis l'historique complet.
-import type { Entry, Goals, MetricField } from '../types';
-import { derive, stat } from '../metrics';
+import type { Entry, Goals, MetricField, Profile } from '../types';
+import { ageFromBirthDate, derive, stat } from '../metrics';
 
 const f1 = (n: number | null | undefined): string =>
 	n == null || !Number.isFinite(n) ? '—' : n.toFixed(1);
@@ -11,6 +11,14 @@ const f0 = (n: number | null | undefined): string =>
 /** Écart signé (cible − actuel) avec signe explicite. */
 const signed = (n: number, decimals = 1): string =>
 	`${n > 0 ? '+' : ''}${n.toFixed(decimals)}`;
+/** Taille en cm → notation « 1m70 ». */
+const fmtHeight = (cm: number): string =>
+	`${Math.floor(cm / 100)}m${String(Math.round(cm % 100)).padStart(2, '0')}`;
+/** 'YYYY-MM-DD' → 'JJ/MM/AAAA'. */
+const fmtFrDate = (iso: string): string => {
+	const [y, m, d] = iso.split('-');
+	return `${d}/${m}/${y}`;
+};
 
 interface SummaryRow {
 	label: string;
@@ -31,7 +39,8 @@ const SUMMARY_ROWS: SummaryRow[] = [
 export function buildMarkdown(
 	entries: Entry[],
 	goals: Goals,
-	opts: { periodLabel: string; generatedAt: string }
+	profile: Profile,
+	opts: { periodLabel: string; generatedAt: string; today: string }
 ): string {
 	const out: string[] = [];
 	const n = entries.length;
@@ -45,7 +54,7 @@ export function buildMarkdown(
 	out.push(
 		'> Journal personnel de composition corporelle et de nutrition. Les calories saisies et ' +
 			'les macronutriments sont des données **indépendantes** (les calories ne sont pas recalculées ' +
-			'à partir des macros). Cette application ne fournit aucune recommandation.'
+			'à partir des macros).'
 	);
 	out.push('');
 
@@ -79,6 +88,42 @@ export function buildMarkdown(
 	// ── Résumé ─────────────────────────────────────────────────────────────
 	out.push('## Résumé');
 	out.push('');
+	// ── Profil ───────────────────────────────────────────────────────────────
+	out.push('### Profil');
+	out.push('');
+	const hasProfile =
+		profile.height_cm != null ||
+		profile.sex != null ||
+		profile.birth_date != null ||
+		(profile.notes != null && profile.notes !== '');
+	if (!hasProfile) {
+		out.push('_Profil non renseigné._');
+		out.push('');
+	} else {
+		if (profile.height_cm != null) out.push(`- **Taille** : ${fmtHeight(profile.height_cm)}`);
+		if (profile.sex != null)
+			out.push(`- **Sexe** : ${profile.sex === 'male' ? 'masculin' : 'féminin'}`);
+		if (profile.birth_date != null) {
+			const age = ageFromBirthDate(profile.birth_date, opts.today);
+			const ageStr = age != null ? ` _(${age} ans)_` : '';
+			out.push(`- **Date de naissance** : ${fmtFrDate(profile.birth_date)}${ageStr}`);
+		}
+		// Blanc séparateur seulement s'il y a eu des puces (évite un double blanc si seules
+		// les notes sont renseignées).
+		const hasIdentity =
+			profile.height_cm != null || profile.sex != null || profile.birth_date != null;
+		if (hasIdentity) out.push('');
+		if (profile.notes != null && profile.notes !== '') {
+			out.push('**Notes / contexte personnel**');
+			out.push('');
+			// Préserver les sauts de ligne saisis : retour forcé Markdown (« deux espaces »)
+			// sur chaque ligne non vide sauf la dernière, sinon les lignes fusionnent.
+			const lines = profile.notes.trim().split(/\r?\n/);
+			lines.forEach((line, i) => out.push(line !== '' && i < lines.length - 1 ? `${line}  ` : line));
+			out.push('');
+		}
+	}
+	// ── Dernière valeurs ───────────────────────────────────────────────────
 	out.push('### Dernières valeurs');
 	out.push('');
 	if (n === 0) {

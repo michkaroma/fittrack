@@ -90,6 +90,23 @@ export function derive(e: Entry): DerivedEntry {
 	};
 }
 
+// ── Profil ─────────────────────────────────────────────────────────────────
+
+/**
+ * Âge révolu (années) à la date `on`, calculé à partir d'une date de naissance.
+ * `birthDate` et `on` au format 'YYYY-MM-DD'. Renvoie null si la naissance est
+ * invalide ou postérieure à `on`.
+ */
+export function ageFromBirthDate(birthDate: string | null, on: string): number | null {
+	if (!birthDate) return null;
+	const [by, bm, bd] = birthDate.split('-').map(Number);
+	const [oy, om, od] = on.split('-').map(Number);
+	if (!by || !bm || !bd || !oy || !om || !od) return null;
+	let age = oy - by;
+	if (om < bm || (om === bm && od < bd)) age--;
+	return age >= 0 ? age : null;
+}
+
 // ── Séries temporelles ───────────────────────────────────────────────────────
 
 /** Numéro de jour absolu (UTC) pour calculer des écarts de dates sans fuseau. */

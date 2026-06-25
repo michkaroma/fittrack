@@ -48,6 +48,25 @@ export const MIGRATIONS: Migration[] = [
 		up: (db) => {
 			db.exec(/* sql */ `ALTER TABLE entries ADD COLUMN effort INTEGER;`);
 		}
+	},
+	{
+		version: 3,
+		name: 'add_profile',
+		up: (db) => {
+			db.exec(/* sql */ `
+        -- ===== profile : ligne unique id=1 (informations personnelles) =====
+        CREATE TABLE IF NOT EXISTS profile (
+          id          INTEGER PRIMARY KEY CHECK (id = 1),
+          height_cm   INTEGER,                 -- taille en cm
+          sex         TEXT,                    -- 'male' | 'female' | NULL
+          birth_date  TEXT,                    -- 'YYYY-MM-DD' | NULL
+          notes       TEXT,                    -- contexte libre (santé, sport…) | NULL
+          updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        INSERT OR IGNORE INTO profile (id) VALUES (1);
+      `);
+		}
 	}
 ];
 
